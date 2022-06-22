@@ -1,8 +1,11 @@
 import 'package:flutter/material.dart';
-import 'package:midtrans_sdk/midtrans_sdk.dart';
+import 'package:flutter_dotenv/flutter_dotenv.dart';
+import 'package:midtrans_test/midtrans/midtrans.dart';
+import 'package:midtrans_test/midtrans/models.dart';
 
-void main() {
+void main() async {
   WidgetsFlutterBinding.ensureInitialized();
+  await dotenv.load(fileName: ".env");
   runApp(const MyApp());
 }
 
@@ -30,32 +33,14 @@ class MyHomePage extends StatefulWidget {
 }
 
 class _MyHomePageState extends State<MyHomePage> {
-  MidtransSDK? _midtrans;
+  Midtrans midtrans = Midtrans();
 
-  void initSDK() async {
-    _midtrans = await MidtransSDK.init(
-      config: MidtransConfig(
-        clientKey: "SB-Mid-client-Ve6moPvBhfZSwpWy",
-        merchantBaseUrl: "",
-        colorTheme: ColorTheme(
-          colorPrimary: Theme.of(context).accentColor,
-          colorPrimaryDark: Theme.of(context).accentColor,
-          colorSecondary: Theme.of(context).accentColor,
-        ),
-      ),
-    );
-    _midtrans?.setUIKitCustomSetting(
-      skipCustomerDetailsPages: true,
-    );
-    _midtrans!.setTransactionFinishedCallback((result) {
-      print(result.toJson());
-    });
-  }
-
-  @override
-  void dispose() {
-    _midtrans?.removeTransactionFinishedCallback();
-    super.dispose();
+  Future charge() async {
+    final data = await midtrans.bankTransferCharge(
+        bank: Bank.bca,
+        transactionRequest: TransactionRequest(
+            transactionDetail:
+                TransactionDetail(orderId: 'A004', grossAmount: '15000')));
   }
 
   @override
@@ -66,14 +51,10 @@ class _MyHomePageState extends State<MyHomePage> {
       ),
       body: Center(
         child: ElevatedButton(
-          child: Text("Pay Now"),
-          onPressed: () async {
-            _midtrans?.startPaymentUiFlow(
-                // token: DotEnv.env['SNAP_TOKEN'],
-                );
-          },
+          onPressed: () => charge(),
+          child: Text('Test'),
         ),
-      ), // This trailing comma makes auto-formatting nicer for build methods.
+      ),
     );
   }
 }
